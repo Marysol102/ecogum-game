@@ -80,20 +80,20 @@ function moverConDedo(e) {
 // --- LÓGICA DE GENERACIÓN ---
 function crearObjeto() {
     if (juegoTerminado) return;
-    nivelDificultad = 1 + Math.floor(puntuacion / 100) * 0.2;
+    nivelDificultad = 1 + Math.floor(puntuacion / 100) * 0.06;
 
     const generarIndividual = () => {
         const tipo = Math.random() > 0.85 ? 'hoja' : 'chicle';
         objetos.push({
             x: Math.random() * (canvas.width - 30),
             y: -30, ancho: 25, alto: 25,
-            vel: (3 + Math.random() * 3) * nivelDificultad, 
+            vel: (1 + Math.random() * 1) * nivelDificultad, 
             tipo: tipo
         });
     };
 
     generarIndividual();
-    if (Math.random() > 0.7) {
+    if (Math.random() > 0.85) {
         setTimeout(generarIndividual, 150);
     }
 }
