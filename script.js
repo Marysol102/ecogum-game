@@ -27,13 +27,14 @@ let puntuacion = 0;
 let vidas = 3;
 let juegoTerminado = false;
 let objetos = [];
+let nivelDificultad = 1;
 
 const jugador = {
     x: 170, y: 400, ancho: 60, alto: 80,
     velocidad: 8, movIzq: false, movDer: false
 };
 
-// --- CONTROLES ---
+// --- CONTROLES DE TECLADO (PC) ---
 window.onkeydown = e => {
     if(e.key === "ArrowLeft") jugador.movIzq = true;
     if(e.key === "ArrowRight") jugador.movDer = true;
@@ -43,31 +44,67 @@ window.onkeyup = e => {
     if(e.key === "ArrowRight") jugador.movDer = false;
 };
 
+// --- CONTROLES TÁCTILES (MÓVIL - SEGUIMIENTO DE DEDO) ---
+
+// Función común para obtener la X del toque adaptada al canvas
+function obtenerPosicionToque(e) {
+    const rect = canvas.getBoundingClientRect();
+    const clienteX = e.touches[0].clientX;
+    // Calculamos la posición relativa al canvas y escalamos según el tamaño visual
+    return (clienteX - rect.left) * (canvas.width / rect.width);
+}
+
 canvas.ontouchstart = e => {
     if (juegoTerminado) { reiniciar(); return; }
-    const rect = canvas.getBoundingClientRect();
-    const x = (e.touches[0].clientX - rect.left) * (canvas.width / rect.width);
-    if (x < jugador.x + jugador.ancho/2) jugador.movIzq = true;
-    else jugador.movDer = true;
+    e.preventDefault(); // Evita scroll o zoom accidental
+    moverConDedo(e);
 };
-canvas.ontouchend = () => { jugador.movIzq = false; jugador.movDer = false; };
 
-// --- LÓGICA ---
+canvas.ontouchmove = e => {
+    e.preventDefault();
+    moverConDedo(e);
+};
+
+function moverConDedo(e) {
+    const xRelativa = obtenerPosicionToque(e);
+    // Centramos el personaje bajo el dedo
+    let nuevaX = xRelativa - jugador.ancho / 2;
+    
+    // Limitamos para que no se salga de los bordes del canvas
+    if (nuevaX < 0) nuevaX = 0;
+    if (nuevaX > canvas.width - jugador.ancho) nuevaX = canvas.width - jugador.ancho;
+    
+    jugador.x = nuevaX;
+}
+
+// --- LÓGICA DE GENERACIÓN ---
 function crearObjeto() {
     if (juegoTerminado) return;
-    const tipo = Math.random() > 0.85 ? 'hoja' : 'chicle';
-    objetos.push({
-        x: Math.random() * (canvas.width - 30),
-        y: -30, ancho: 25, alto: 25,
-        vel: 3 + Math.random() * 3, tipo: tipo
-    });
+    nivelDificultad = 1 + Math.floor(puntuacion / 100) * 0.2;
+
+    const generarIndividual = () => {
+        const tipo = Math.random() > 0.85 ? 'hoja' : 'chicle';
+        objetos.push({
+            x: Math.random() * (canvas.width - 30),
+            y: -30, ancho: 25, alto: 25,
+            vel: (3 + Math.random() * 3) * nivelDificultad, 
+            tipo: tipo
+        });
+    };
+
+    generarIndividual();
+    if (Math.random() > 0.7) {
+        setTimeout(generarIndividual, 150);
+    }
 }
 
 function reiniciar() {
     puntuacion = 0; vidas = 3; objetos = [];
+    nivelDificultad = 1;
     juegoTerminado = false; actualizar();
 }
 
+// --- BUCLE PRINCIPAL ---
 function actualizar() {
     if (juegoTerminado) {
         ctx.fillStyle = "rgba(0,0,0,0.8)";
@@ -83,8 +120,12 @@ function actualizar() {
     }
 
     ctx.clearRect(0,0, canvas.width, canvas.height);
-    ctx.drawImage(assets.fondo, 0, 0, canvas.width, canvas.height);
     
+    ctx.globalAlpha = 0.5;
+    ctx.drawImage(assets.fondo, 0, 0, canvas.width, canvas.height);
+    ctx.globalAlpha = 1.0;
+
+    // Movimiento por teclado (solo aplica si no se está usando el táctil)
     if (jugador.movIzq && jugador.x > 0) jugador.x -= jugador.velocidad;
     if (jugador.movDer && jugador.x < canvas.width - jugador.ancho) jugador.x += jugador.velocidad;
 
@@ -96,7 +137,6 @@ function actualizar() {
         const img = o.tipo === 'hoja' ? assets.hoja : assets.chicle;
         ctx.drawImage(img, o.x, o.y, o.ancho, o.alto);
 
-        // Colisión con la caja (ajustar según el dibujo del niño)
         if (o.x < jugador.x + jugador.ancho && o.x + o.ancho > jugador.x &&
             o.y + o.alto > jugador.y && o.y < jugador.y + 20) {
             puntuacion += (o.tipo === 'hoja' ? 50 : 10);
