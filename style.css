@@ -1,3 +1,6 @@
+/* ── BASE ─────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
 body {
     margin: 0;
     padding: 0;
@@ -5,17 +8,13 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    font-family: 'Courier New', Courier, monospace;
-    overflow: hidden;
+    font-family: 'Nunito', 'Courier New', Courier, monospace;
+    overflow-x: hidden;
+    overflow-y: auto;
     touch-action: none;
 }
 
-h1 {
-    color: #54b948;
-    margin: 10px 0;
-    text-shadow: 2px 2px 0px #ff5c8d;
-}
-
+/* ── TÍTULO EN JUEGO ──────────────────────────── */
 #titulo {
     display: flex;
     align-items: center;
@@ -23,44 +22,242 @@ h1 {
     margin: 8px 0 4px;
     line-height: 1;
 }
-
 #logoImg {
     height: 52px;
     width: auto;
     display: block;
 }
-
 #theGame {
     font-family: 'Fredoka One', cursive;
     font-size: 30px;
     color: #54b948;
     text-shadow: 2px 2px 0px #ff5c8d;
-    /* Ajuste fino para alinear con la imagen */
     padding-top: 4px;
 }
 
+/* ── CANVAS ───────────────────────────────────── */
+#juegoWrapper {
+    margin-bottom: 16px;
+}
 canvas {
     background-color: #87CEEB;
     border: 4px solid #54b948;
-    max-width: 95%;
+    max-width: 100%;
     max-height: 80vh;
     image-rendering: pixelated;
+    display: block;
 }
 
-/* --- OVERLAY GAME OVER / LEADERBOARD --- */
+/* ══════════════════════════════════════════════
+   PANTALLA DE INICIO
+══════════════════════════════════════════════ */
+#overlayInicio {
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(160deg, #b8e8ff 0%, #d4f5c4 100%);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    z-index: 20;
+    overflow-y: auto;
+    padding: 20px 12px 32px;
+}
+#overlayInicio.oculto { display: none; }
+
+#panelInicio {
+    background: rgba(255,255,255,0.82);
+    backdrop-filter: blur(6px);
+    border: 3px solid #54b948;
+    border-radius: 18px;
+    padding: 22px 22px 26px;
+    max-width: 420px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    box-shadow: 0 8px 32px rgba(84,185,72,0.18);
+}
+
+/* Logo en inicio */
+.inicio-logo {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+#logoInicio {
+    height: 58px;
+    width: auto;
+}
+.inicio-thegame {
+    font-family: 'Fredoka One', cursive;
+    font-size: 32px;
+    color: #54b948;
+    text-shadow: 2px 2px 0 #ff5c8d;
+    padding-top: 4px;
+}
+
+/* Sección título */
+.inicio-seccion-titulo {
+    font-family: 'Fredoka One', cursive;
+    font-size: 15px;
+    color: #2d6a4f;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin: 0;
+    align-self: flex-start;
+}
+
+/* ── SELECTOR DE PERSONAJES ───────────────────── */
+.selector-personajes {
+    display: flex;
+    gap: 14px;
+    width: 100%;
+    justify-content: center;
+}
+
+.personaje-card {
+    flex: 1;
+    max-width: 160px;
+    background: #f0faf0;
+    border: 3px solid #ccc;
+    border-radius: 14px;
+    padding: 12px 8px 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 7px;
+    cursor: pointer;
+    transition: border-color 0.2s, transform 0.15s, box-shadow 0.2s;
+    position: relative;
+}
+.personaje-card:hover {
+    border-color: #a8d5a2;
+    transform: translateY(-2px);
+}
+.personaje-card.seleccionado {
+    border-color: #54b948;
+    background: #e8f8e5;
+    transform: scale(1.04);
+    box-shadow: 0 4px 14px rgba(84,185,72,0.28);
+}
+
+.perfil-img {
+    width: 72px;
+    height: 72px;
+    object-fit: contain;
+    image-rendering: pixelated;
+    border-radius: 8px;
+}
+
+.personaje-nombre {
+    font-family: 'Fredoka One', cursive;
+    font-size: 14px;
+    color: #444;
+}
+
+.tick {
+    position: absolute;
+    top: 6px; right: 8px;
+    font-size: 16px;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+.personaje-card.seleccionado .tick {
+    opacity: 1;
+}
+
+/* ── INSTRUCCIONES EN INICIO ──────────────────── */
+.inicio-instrucciones {
+    background: rgba(255,255,255,0.75);
+    border-radius: 12px;
+    padding: 12px 14px;
+    width: 100%;
+    border-left: 4px solid #54b948;
+}
+
+.inicio-instrucciones ul {
+    list-style: none;
+    padding: 0; margin: 0 0 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+.inicio-instrucciones li {
+    display: flex;
+    gap: 8px;
+    font-size: 13px;
+    color: #333;
+    line-height: 1.45;
+    align-items: flex-start;
+}
+.inicio-instrucciones li .ico {
+    font-size: 15px;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+.inicio-instrucciones li strong { color: #ff5c8d; }
+
+.controles-txt {
+    margin: 0;
+    font-size: 12px;
+    color: #555;
+    background: #fff0f5;
+    border-left: 3px solid #ff5c8d;
+    padding: 6px 8px;
+    border-radius: 0 6px 6px 0;
+    line-height: 1.75;
+}
+
+/* ── TEXTO PROYECTO ───────────────────────────── */
+.texto-proyecto {
+    background: rgba(255,255,255,0.7);
+    border-radius: 10px;
+    padding: 11px 14px;
+    width: 100%;
+    font-size: 12.5px;
+    color: #444;
+    line-height: 1.65;
+    text-align: center;
+    border-left: 4px solid #ff5c8d;
+}
+.texto-proyecto .eco { color: #54b948; font-weight: 700; }
+.texto-proyecto .gum { color: #ff5c8d; font-weight: 700; }
+
+/* ── BOTÓN JUGAR ──────────────────────────────── */
+#btnJugar {
+    font-family: 'Fredoka One', cursive;
+    font-size: 22px;
+    background: #54b948;
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 13px 52px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    box-shadow: 0 5px 0 #3a8a32, 0 8px 18px rgba(84,185,72,0.3);
+    transition: transform 0.1s, box-shadow 0.1s, background 0.15s;
+    margin-top: 4px;
+}
+#btnJugar:hover { background: #46a83c; }
+#btnJugar:active {
+    transform: translateY(4px);
+    box-shadow: 0 1px 0 #3a8a32;
+}
+
+/* ══════════════════════════════════════════════
+   OVERLAY GAME OVER / LEADERBOARD
+══════════════════════════════════════════════ */
 #overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.75);
+    background: rgba(0,0,0,0.75);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 10;
 }
-
-#overlay.oculto {
-    display: none;
-}
+#overlay.oculto { display: none; }
 
 #panelGameOver {
     background: #1a1a2e;
@@ -75,37 +272,39 @@ canvas {
     max-height: 85vh;
     overflow-y: auto;
 }
-
 #panelGameOver h2 {
     color: #ff5c8d;
     font-size: 28px;
     margin: 0 0 8px;
     text-shadow: 2px 2px 0 #000;
 }
-
 #puntuacionFinal {
     font-size: 20px;
     color: #ffd700;
     margin-bottom: 16px;
 }
 
+/* Input nombre (3 letras, estilo arcade) */
 #inputNombre {
-    width: 100%;
-    padding: 8px 10px;
-    font-size: 15px;
+    width: 120px;
+    padding: 10px 6px;
+    font-size: 28px;
     font-family: 'Courier New', Courier, monospace;
+    font-weight: bold;
+    letter-spacing: 10px;
     border: 2px solid #54b948;
     border-radius: 6px;
     background: #0f3460;
-    color: white;
+    color: #ffd700;
     box-sizing: border-box;
     margin-bottom: 10px;
     text-align: center;
+    text-transform: uppercase;
 }
-
 #inputNombre::placeholder {
-    color: #aaa;
-    font-size: 13px;
+    color: #555;
+    letter-spacing: 8px;
+    font-size: 22px;
 }
 
 #btnGuardar, #btnReiniciar {
@@ -121,34 +320,13 @@ canvas {
     margin-top: 8px;
     transition: opacity 0.2s;
 }
-
-#btnGuardar {
-    background: #54b948;
-    color: white;
-}
-
-#btnGuardar:disabled {
-    opacity: 0.5;
-    cursor: default;
-}
-
-#btnReiniciar {
-    background: #ff5c8d;
-    color: white;
-}
-
-#btnGuardar:hover:not(:disabled),
-#btnReiniciar:hover {
-    opacity: 0.85;
-}
+#btnGuardar { background: #54b948; color: white; }
+#btnGuardar:disabled { opacity: 0.5; cursor: default; }
+#btnReiniciar { background: #ff5c8d; color: white; }
+#btnGuardar:hover:not(:disabled), #btnReiniciar:hover { opacity: 0.85; }
 
 /* Ranking */
-#ranking h3 {
-    color: #ffd700;
-    margin: 16px 0 8px;
-    font-size: 17px;
-}
-
+#ranking h3 { color: #ffd700; margin: 16px 0 8px; font-size: 17px; }
 #listaRanking {
     text-align: left;
     padding-left: 20px;
@@ -157,21 +335,16 @@ canvas {
     font-size: 14px;
     line-height: 1.8;
 }
+#listaRanking li:first-child  { color: #ffd700; font-weight: bold; }
+#listaRanking li:nth-child(2) { color: #c0c0c0; }
+#listaRanking li:nth-child(3) { color: #cd7f32; }
 
-#listaRanking li:first-child {
-    color: #ffd700;
-    font-weight: bold;
-}
+#ranking.oculto, #formNombre.oculto { display: none; }
 
-#listaRanking li:nth-child(2) {
-    color: #c0c0c0;
-}
-
-#listaRanking li:nth-child(3) {
-    color: #cd7f32;
-}
-
-#ranking.oculto,
-#formNombre.oculto {
-    display: none;
+/* ── RESPONSIVE ───────────────────────────────── */
+@media (max-width: 460px) {
+    #panelInicio { padding: 16px 14px 22px; gap: 12px; }
+    .inicio-thegame { font-size: 26px; }
+    #logoInicio { height: 46px; }
+    .perfil-img { width: 58px; height: 58px; }
 }

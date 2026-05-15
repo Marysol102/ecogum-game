@@ -2,32 +2,32 @@ const canvas = document.getElementById("juegoCanvas");
 const ctx = canvas.getContext("2d");
 
 // --- ASSETS ---
+// Los assets base se pre-cargan silenciosamente.
+// El personaje elegido se inyecta al pulsar JUGAR.
 const assets = {
-    fondo:    new Image(),
-    fondo2:   new Image(),
-    jugador:  new Image(),
-    chicle:   new Image(),
-    hoja:     new Image(),
-    pajaro:   new Image(),
-    caca:     new Image(),
-    patinete: new Image()
+    fondo:     new Image(),
+    fondo2:    new Image(),
+    jugador:   new Image(),   // se asigna al arrancar según selección
+    jugador2:  new Image(),   // personaje2 pre-cargado
+    chicle:    new Image(),
+    hoja:      new Image(),
+    pajaro:    new Image(),
+    caca:      new Image(),
+    patinete:  new Image()
 };
 
 assets.fondo.src    = 'assets/fondo.png';
 assets.fondo2.src   = 'assets/fondo2.png';
 assets.jugador.src  = 'assets/personaje.png';
+assets.jugador2.src = 'assets/personaje2.png';
 assets.chicle.src   = 'assets/chicle.png';
 assets.hoja.src     = 'assets/hoja.png';
 assets.pajaro.src   = 'assets/pajaro.png';
 assets.caca.src     = 'assets/caca.png';
 assets.patinete.src = 'assets/patinete.png';
 
-let cargadas = 0;
-const TOTAL_ASSETS = Object.keys(assets).length;
-Object.values(assets).forEach(img => {
-    img.onload  = () => { cargadas++; if (cargadas === TOTAL_ASSETS) iniciar(); };
-    img.onerror = () => { cargadas++; if (cargadas === TOTAL_ASSETS) iniciar(); };
-});
+// Imagen del jugador activa (se decide al pulsar Jugar)
+let imgJugador = assets.jugador;
 
 // --- AUDIO ---
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -35,135 +35,121 @@ const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 function reproducirSonido(freq, tipo, dur, vol = 0.3, freqFinal = null) {
     const osc  = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
-    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
     osc.type = tipo;
     osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-    if (freqFinal !== null) osc.frequency.linearRampToValueAtTime(freqFinal, audioCtx.currentTime + dur);
+    if (freqFinal !== null)
+        osc.frequency.linearRampToValueAtTime(freqFinal, audioCtx.currentTime + dur);
     gain.gain.setValueAtTime(vol, audioCtx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
     osc.start(audioCtx.currentTime);
     osc.stop(audioCtx.currentTime + dur);
 }
 
-function sonidoChicle()   { reproducirSonido(520, 'square', 0.08, 0.25); }
+function sonidoChicle()   { reproducirSonido(520, 'square',   0.08, 0.25); }
 function sonidoCaida()    { reproducirSonido(220, 'sawtooth', 0.18, 0.2, 80); }
-function sonidoHoja()     { reproducirSonido(880, 'sine', 0.15, 0.3); setTimeout(() => reproducirSonido(1100, 'sine', 0.1, 0.15), 80); }
-function sonidoCaca()     { reproducirSonido(300, 'sawtooth', 0.05, 0.4, 80); setTimeout(() => reproducirSonido(150, 'sawtooth', 0.12, 0.35, 60), 50); }
-function sonidoSalto()    { reproducirSonido(280, 'sine', 0.12, 0.15, 480); }
-
+function sonidoHoja()     {
+    reproducirSonido(880, 'sine', 0.15, 0.3);
+    setTimeout(() => reproducirSonido(1100, 'sine', 0.1, 0.15), 80);
+}
+function sonidoCaca()     {
+    reproducirSonido(300, 'sawtooth', 0.05, 0.4, 80);
+    setTimeout(() => reproducirSonido(150, 'sawtooth', 0.12, 0.35, 60), 50);
+}
 function sonidoGraznido() {
-    // Graznido sintetizado: oscilación rápida de frecuencia
-    const osc  = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.connect(gain); gain.connect(audioCtx.destination);
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(700, audioCtx.currentTime);
-    osc.frequency.linearRampToValueAtTime(350, audioCtx.currentTime + 0.08);
-    osc.frequency.linearRampToValueAtTime(600, audioCtx.currentTime + 0.16);
-    osc.frequency.linearRampToValueAtTime(280, audioCtx.currentTime + 0.28);
-    gain.gain.setValueAtTime(0.28, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.32);
-    osc.start(audioCtx.currentTime);
-    osc.stop(audioCtx.currentTime + 0.32);
+    reproducirSonido(700, 'sawtooth', 0.08, 0.25, 350);
+    setTimeout(() => reproducirSonido(600, 'sawtooth', 0.06, 0.18, 280), 100);
 }
-
 function sonidoPatinete() {
-    // Ruido de ruedas: zumbido rápido ascendente
-    reproducirSonido(120, 'sawtooth', 0.25, 0.2, 320);
-    setTimeout(() => reproducirSonido(200, 'square', 0.15, 0.1, 80), 100);
+    reproducirSonido(180, 'sawtooth', 0.12, 0.2, 220);
+    setTimeout(() => reproducirSonido(200, 'square', 0.06, 0.1), 120);
 }
 
-// --- CONSTANTES DE FÍSICA ---
-const SUELO      = 400;
-const GRAVEDAD   = 0.6;
-const FUERZA_SALTO = -13;
-
-// --- VARIABLES ---
-let puntuacion = 0;
-let vidas = 3;
+// --- ESTADO ---
+let puntuacion     = 0;
+let vidas          = 3;
 let juegoTerminado = false;
-let objetos  = [];
-let pajaros  = [];
-let cacas    = [];
-let patinetes = [];
-let nivelDificultad = 1;
-let fondoTransicion = 0;   // 0 = fondo1, 1 = fondo2 (se va llenando a partir de 1000 pts)
+let juegoIniciado  = false;
+let objetos        = [];
+let pajaros        = [];
+let cacas          = [];
+let patinetes      = [];
+let nivelDificultad  = 1;
 let pajaroActivado   = false;
 let patineteActivado = false;
+let fondoAlpha       = 0;   // transición fondo2
 let intervaloObjetos = null;
 let intervaloPajaro  = null;
 let intervaloPatinete = null;
 
+// Física de salto
+const GRAVEDAD      = 0.6;
+const FUERZA_SALTO  = -13;
+const SUELO_Y       = 400;
+
 const jugador = {
-    x: 170, y: SUELO, ancho: 60, alto: 80,
+    x: 170, y: SUELO_Y, ancho: 60, alto: 80,
+    vx: 0, vy: 0,
     velocidad: 8,
     movIzq: false, movDer: false,
-    velY: 0,
     enSuelo: true
 };
 
-function saltar() {
-    if (jugador.enSuelo) {
-        jugador.velY = FUERZA_SALTO;
-        jugador.enSuelo = false;
-        sonidoSalto();
-    }
-}
-
-// --- TECLADO ---
+// --- CONTROLES TECLADO ---
 window.onkeydown = e => {
     if (e.key === "ArrowLeft")  jugador.movIzq = true;
     if (e.key === "ArrowRight") jugador.movDer = true;
-    if (e.key === "ArrowUp")    saltar();
+    if (e.key === "ArrowUp" && jugador.enSuelo) saltar();
 };
 window.onkeyup = e => {
     if (e.key === "ArrowLeft")  jugador.movIzq = false;
     if (e.key === "ArrowRight") jugador.movDer = false;
 };
 
-// --- TÁCTIL ---
-let touchStartY = 0;
-let saltoTactilDisparado = false;
-
-function obtenerPosicionToque(e) {
-    const rect = canvas.getBoundingClientRect();
-    return (e.touches[0].clientX - rect.left) * (canvas.width / rect.width);
+function saltar() {
+    jugador.vy = FUERZA_SALTO;
+    jugador.enSuelo = false;
 }
+
+// --- CONTROLES TÁCTILES ---
+let touchStartY = null;
 
 canvas.ontouchstart = e => {
     e.preventDefault();
     touchStartY = e.touches[0].clientY;
-    saltoTactilDisparado = false;
     moverConDedo(e);
 };
-
 canvas.ontouchmove = e => {
     e.preventDefault();
-    moverConDedo(e);
-    // Salto si el dedo sube ≥ 40px sin soltarlo
-    const dy = touchStartY - e.touches[0].clientY;
-    if (dy >= 40 && !saltoTactilDisparado) {
+    const dyCliente = e.touches[0].clientY - touchStartY;
+    const rect = canvas.getBoundingClientRect();
+    const escala = canvas.height / rect.height;
+    const dy = dyCliente * escala;
+    if (dy < -40 && jugador.enSuelo) {   // dedo arrastra hacia arriba ≥ 40px
         saltar();
-        saltoTactilDisparado = true;
+        touchStartY = e.touches[0].clientY; // reset para no re-disparar
     }
+    moverConDedo(e);
 };
+canvas.ontouchend = () => { touchStartY = null; };
 
 function moverConDedo(e) {
-    let nuevaX = obtenerPosicionToque(e) - jugador.ancho / 2;
+    const rect = canvas.getBoundingClientRect();
+    let nuevaX = (e.touches[0].clientX - rect.left) * (canvas.width / rect.width) - jugador.ancho / 2;
     jugador.x = Math.max(0, Math.min(canvas.width - jugador.ancho, nuevaX));
 }
 
-// --- GENERACIÓN OBJETOS ---
+// --- GENERACIÓN DE OBJETOS ---
 function crearObjeto() {
     if (juegoTerminado) return;
     nivelDificultad = 1 + Math.floor(puntuacion / 100) * 0.1;
-
     const generarIndividual = () => {
         const tipo = Math.random() > 0.85 ? 'hoja' : 'chicle';
         objetos.push({
             x: Math.random() * (canvas.width - 30),
             y: -30, ancho: 25, alto: 25,
-            vel: (1 + Math.random() * 1) * nivelDificultad,
+            vel: (1 + Math.random()) * nivelDificultad,
             tipo
         });
     };
@@ -175,16 +161,15 @@ function crearObjeto() {
 function crearPajaro() {
     if (juegoTerminado || puntuacion < 1000) return;
     if (Math.random() > 0.55) return;
-
-    const haciaLaDerecha = Math.random() > 0.5;
-    const vel = 1.2 + Math.random() * 1.0; // más lento que antes
+    const dcha = Math.random() > 0.5;
+    const vel  = 1.2 + Math.random();
     pajaros.push({
-        x:    haciaLaDerecha ? -70 : canvas.width + 10,
-        y:    50 + Math.random() * 130,
+        x: dcha ? -70 : canvas.width + 10,
+        y: 50 + Math.random() * 130,
         ancho: 60, alto: 45,
-        vel:  haciaLaDerecha ? vel : -vel,
-        haciaLaDerecha,
-        framesCacaRestantes: 80 + Math.floor(Math.random() * 100)
+        vel: dcha ? vel : -vel,
+        haciaLaDerecha: dcha,
+        framesCacaRestantes: 60 + Math.floor(Math.random() * 80)
     });
     sonidoGraznido();
 }
@@ -197,16 +182,15 @@ function activarPajaro() {
 // --- PATINETE ---
 function crearPatinete() {
     if (juegoTerminado || puntuacion < 2000) return;
-    if (Math.random() > 0.5) return; // ~50% de probabilidad cada llamada
-
-    const haciaLaDerecha = Math.random() > 0.5;
-    const vel = 2.5 + Math.random() * 1.5;
+    if (Math.random() > 0.5) return;
+    const dcha = Math.random() > 0.5;
+    const vel  = 3 + Math.random() * 2;
     patinetes.push({
-        x:    haciaLaDerecha ? -100 : canvas.width + 10,
-        y:    430,          // nivel del suelo, el jugador debe saltar para esquivarlo
-        ancho: 90, alto: 40,
-        vel:  haciaLaDerecha ? vel : -vel,
-        haciaLaDerecha
+        x: dcha ? -100 : canvas.width + 10,
+        y: SUELO_Y + jugador.alto - 40,   // a ras del suelo del jugador
+        ancho: 80, alto: 40,
+        vel: dcha ? vel : -vel,
+        haciaLaDerecha: dcha
     });
     sonidoPatinete();
 }
@@ -229,12 +213,12 @@ async function guardarPuntuacion(nombre, puntos) {
 
 async function cargarRanking() {
     try {
-        const snapshot = await db.collection("ecogum_leaderboard")
+        const snap = await db.collection("ecogum_leaderboard")
             .orderBy("puntuacion", "desc").limit(10).get();
         const lista = document.getElementById("listaRanking");
         lista.innerHTML = "";
-        snapshot.forEach(doc => {
-            const d = doc.data();
+        snap.forEach(doc => {
+            const d  = doc.data();
             const li = document.createElement("li");
             li.textContent = `${d.nombre} — ${d.puntuacion} pts`;
             lista.appendChild(li);
@@ -270,7 +254,7 @@ document.getElementById("btnReiniciar").addEventListener("click", () => {
     reiniciar();
 });
 
-document.getElementById("inputNombre").addEventListener("input", function() {
+document.getElementById("inputNombre").addEventListener("input", function () {
     const pos = this.selectionStart;
     this.value = this.value.toUpperCase();
     this.setSelectionRange(pos, pos);
@@ -278,24 +262,33 @@ document.getElementById("inputNombre").addEventListener("input", function() {
 
 // --- REINICIO ---
 function reiniciar() {
-    puntuacion = 0; vidas = 3; nivelDificultad = 1;
-    fondoTransicion = 0;
+    puntuacion = 0; vidas = 3; nivelDificultad = 1; fondoAlpha = 0;
     objetos = []; pajaros = []; cacas = []; patinetes = [];
     pajaroActivado = false; patineteActivado = false;
+    jugador.x = 170; jugador.y = SUELO_Y; jugador.vy = 0; jugador.enSuelo = true;
     juegoTerminado = false;
-
-    jugador.x = 170; jugador.y = SUELO;
-    jugador.velY = 0; jugador.enSuelo = true;
-    jugador.movIzq = false; jugador.movDer = false;
 
     if (intervaloObjetos)  clearInterval(intervaloObjetos);
     if (intervaloPajaro)   clearInterval(intervaloPajaro);
     if (intervaloPatinete) clearInterval(intervaloPatinete);
-    intervaloPajaro = null;
-    intervaloPatinete = null;
+    intervaloPajaro = null; intervaloPatinete = null;
 
     intervaloObjetos = setInterval(crearObjeto, 1000);
     actualizar();
+}
+
+// --- PUNTO DE ENTRADA desde HTML ---
+// Llamado al pulsar ▶ JUGAR con el personaje elegido
+function iniciarJuego(srcPersonaje) {
+    // Elegir imagen del jugador
+    imgJugador = (srcPersonaje === 'assets/personaje2.png') ? assets.jugador2 : assets.jugador;
+
+    if (!juegoIniciado) {
+        juegoIniciado = true;
+        reiniciar();
+    } else {
+        reiniciar();
+    }
 }
 
 // --- BUCLE PRINCIPAL ---
@@ -308,43 +301,34 @@ function actualizar() {
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // FONDO con transición gradual a fondo2 a partir de 1000 pts
-    if (puntuacion >= 1000 && fondoTransicion < 1) {
-        // Transición completa en ~500 puntos (de 1000 a 1500)
-        fondoTransicion = Math.min(1, (puntuacion - 1000) / 500);
-    }
+    // FONDO: transición a fondo2 a partir de 1000 pts
     ctx.globalAlpha = 0.5;
     ctx.drawImage(assets.fondo, 0, 0, canvas.width, canvas.height);
-    if (fondoTransicion > 0) {
-        ctx.globalAlpha = 0.5 * fondoTransicion;
+    if (puntuacion >= 1000) {
+        fondoAlpha = Math.min(1, fondoAlpha + 0.002);
+        ctx.globalAlpha = fondoAlpha * 0.5;
         ctx.drawImage(assets.fondo2, 0, 0, canvas.width, canvas.height);
     }
     ctx.globalAlpha = 1.0;
 
-    // JUGADOR — física de salto
-    jugador.velY += GRAVEDAD;
-    jugador.y += jugador.velY;
-    if (jugador.y >= SUELO) {
-        jugador.y = SUELO;
-        jugador.velY = 0;
-        jugador.enSuelo = true;
-    }
-
-    // Movimiento horizontal
+    // JUGADOR — física
     if (jugador.movIzq && jugador.x > 0) jugador.x -= jugador.velocidad;
     if (jugador.movDer && jugador.x < canvas.width - jugador.ancho) jugador.x += jugador.velocidad;
 
-    ctx.drawImage(assets.jugador, jugador.x, jugador.y, jugador.ancho, jugador.alto);
+    if (!jugador.enSuelo) {
+        jugador.vy += GRAVEDAD;
+        jugador.y  += jugador.vy;
+        if (jugador.y >= SUELO_Y) {
+            jugador.y = SUELO_Y;
+            jugador.vy = 0;
+            jugador.enSuelo = true;
+        }
+    }
+    ctx.drawImage(imgJugador, jugador.x, jugador.y, jugador.ancho, jugador.alto);
 
-    // Activar pájaro y patinete según puntuación
-    if (!pajaroActivado && puntuacion >= 1000) {
-        pajaroActivado = true;
-        activarPajaro();
-    }
-    if (!patineteActivado && puntuacion >= 2000) {
-        patineteActivado = true;
-        activarPatinete();
-    }
+    // Activar pájaro y patinete por hitos de puntuación
+    if (!pajaroActivado && puntuacion >= 1000)   { pajaroActivado = true;   activarPajaro(); }
+    if (!patineteActivado && puntuacion >= 2000)  { patineteActivado = true; activarPatinete(); }
 
     // --- OBJETOS (chicles y hojas) ---
     for (let i = 0; i < objetos.length; i++) {
@@ -368,7 +352,6 @@ function actualizar() {
     for (let i = 0; i < pajaros.length; i++) {
         let b = pajaros[i];
         b.x += b.vel;
-
         ctx.save();
         if (!b.haciaLaDerecha) {
             ctx.translate(b.x + b.ancho, b.y);
@@ -379,21 +362,12 @@ function actualizar() {
         }
         ctx.restore();
 
-        // Soltar caca
         b.framesCacaRestantes--;
         if (b.framesCacaRestantes <= 0) {
-            cacas.push({
-                x: b.x + b.ancho / 2 - 8,
-                y: b.y + b.alto,
-                ancho: 16, alto: 20,
-                vel: 3 + Math.random() * 2
-            });
-            b.framesCacaRestantes = 60 + Math.floor(Math.random() * 80);
+            cacas.push({ x: b.x + b.ancho/2 - 8, y: b.y + b.alto, ancho: 16, alto: 20, vel: 3 + Math.random()*2 });
+            b.framesCacaRestantes = 50 + Math.floor(Math.random()*60);
         }
-
-        if (b.x > canvas.width + 80 || b.x < -80) {
-            pajaros.splice(i, 1); i--;
-        }
+        if (b.x > canvas.width + 80 || b.x < -80) { pajaros.splice(i, 1); i--; }
     }
 
     // --- CACAS ---
@@ -401,22 +375,18 @@ function actualizar() {
         let c = cacas[i];
         c.y += c.vel;
         ctx.drawImage(assets.caca, c.x, c.y, c.ancho, c.alto);
-
         if (c.x < jugador.x + jugador.ancho && c.x + c.ancho > jugador.x &&
             c.y + c.alto > jugador.y && c.y < jugador.y + jugador.alto) {
             vidas--; sonidoCaca();
             if (vidas <= 0) { juegoTerminado = true; mostrarGameOver(); }
             cacas.splice(i, 1); i--;
-        } else if (c.y > canvas.height) {
-            cacas.splice(i, 1); i--;
-        }
+        } else if (c.y > canvas.height) { cacas.splice(i, 1); i--; }
     }
 
     // --- PATINETES ---
     for (let i = 0; i < patinetes.length; i++) {
         let p = patinetes[i];
         p.x += p.vel;
-
         ctx.save();
         if (!p.haciaLaDerecha) {
             ctx.translate(p.x + p.ancho, p.y);
@@ -427,12 +397,13 @@ function actualizar() {
         }
         ctx.restore();
 
-        // Colisión: solo si el jugador NO ha saltado suficientemente alto
-        // El patinete está en y=430, el jugador debe tener sus pies (y+alto) por encima de eso
-        const jugadorPies = jugador.y + jugador.alto;
-        if (p.x < jugador.x + jugador.ancho && p.x + p.ancho > jugador.x &&
-            jugadorPies > p.y && jugador.y < p.y + p.alto) {
-            vidas--; sonidoCaida();
+        // Colisión solo si el jugador está en el suelo (no ha saltado)
+        const jugadorEnSuelo = jugador.y >= SUELO_Y - 2;
+        if (jugadorEnSuelo &&
+            p.x < jugador.x + jugador.ancho && p.x + p.ancho > jugador.x &&
+            p.y < jugador.y + jugador.alto   && p.y + p.alto  > jugador.y) {
+            vidas--;
+            reproducirSonido(150, 'sawtooth', 0.2, 0.4, 80);
             if (vidas <= 0) { juegoTerminado = true; mostrarGameOver(); }
             patinetes.splice(i, 1); i--;
         } else if (p.x > canvas.width + 110 || p.x < -110) {
@@ -449,11 +420,4 @@ function actualizar() {
     ctx.fillText("Vidas: " + vidas, canvas.width - 100, 30);
 
     requestAnimationFrame(actualizar);
-}
-
-// --- INICIO ---
-function iniciar() {
-    if (intervaloObjetos) clearInterval(intervaloObjetos);
-    intervaloObjetos = setInterval(crearObjeto, 1000);
-    actualizar();
 }

@@ -5,35 +5,91 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ECOGUM the game</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
+
+    <!-- ══════════════════════════════════════
+         PANTALLA DE INICIO
+    ══════════════════════════════════════ -->
+    <div id="overlayInicio">
+        <div id="panelInicio">
+
+            <!-- Logo -->
+            <div class="inicio-logo">
+                <img src="assets/logo.png" alt="ECOGUM" id="logoInicio" />
+                <span class="inicio-thegame">The Game</span>
+            </div>
+
+            <!-- Selector de personaje -->
+            <p class="inicio-seccion-titulo">Elige tu personaje</p>
+            <div class="selector-personajes">
+                <div class="personaje-card seleccionado"
+                     data-src="assets/personaje.png"
+                     onclick="seleccionarPersonaje(this)">
+                    <img src="assets/perfil1.png" alt="Personaje 1" class="perfil-img" />
+                    <span class="personaje-nombre">Personaje 1</span>
+                    <span class="tick">✔</span>
+                </div>
+                <div class="personaje-card"
+                     data-src="assets/personaje2.png"
+                     onclick="seleccionarPersonaje(this)">
+                    <img src="assets/perfil2.png" alt="Personaje 2" class="perfil-img" />
+                    <span class="personaje-nombre">Personaje 2</span>
+                    <span class="tick">✔</span>
+                </div>
+            </div>
+
+            <!-- Instrucciones -->
+            <div class="inicio-instrucciones">
+                <ul>
+                    <li><span class="ico">🍬</span><span><strong>Chicle:</strong> recógelo para ganar <strong>10 pts</strong>. Si cae al suelo, pierdes una vida.</span></li>
+                    <li><span class="ico">🌿</span><span><strong>Hoja:</strong> bonus de <strong>50 pts</strong>. No penaliza si cae.</span></li>
+                    <li><span class="ico">❤️</span><span>Empiezas con <strong>3 vidas</strong>. Cuida los chicles.</span></li>
+                    <li><span class="ico">⚡</span><span>Cuantos más puntos, más rápido cae todo. ¡Sin límite!</span></li>
+                    <li><span class="ico">🐦</span><span>A los <strong>1.000 pts</strong> aparecen pájaros. ¡Esquiva su caca!</span></li>
+                    <li><span class="ico">🛴</span><span>A los <strong>2.000 pts</strong> hay patinetes. ¡Salta para esquivarlos!</span></li>
+                </ul>
+                <p class="controles-txt">
+                    🖱️ <strong>PC:</strong> ← → moverse &nbsp;·&nbsp; ↑ saltar<br>
+                    📱 <strong>Móvil:</strong> desliza el dedo &nbsp;·&nbsp; arrastra hacia arriba para saltar
+                </p>
+            </div>
+
+            <!-- Texto proyecto -->
+            <p class="texto-proyecto">
+                En Montessori Schoolhouse Logroño hemos ideado
+                <span class="eco">ECO</span><span class="gum">GUM</span>,
+                un proyecto que ayuda a un gran problema en la sociedad:
+                hay muchos chicles en el suelo. Ayúdanos a hacer nuestro
+                proyecto realidad, ¡disfrutad del juego!
+            </p>
+
+            <!-- Botón jugar -->
+            <button id="btnJugar" onclick="arrancarJuego()">▶ ¡JUGAR!</button>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         JUEGO
+    ══════════════════════════════════════ -->
     <div id="titulo">
         <img src="assets/logo.png" alt="ECOGUM" id="logoImg" />
         <span id="theGame">The Game</span>
     </div>
     <div id="juegoWrapper">
         <canvas id="juegoCanvas" width="400" height="500"></canvas>
-
-        <aside id="instrucciones">
-            <h3>📋 Cómo jugar</h3>
-            <ul>
-                <li>🍬 <strong>Chicle</strong><br>Recógelo para ganar <strong>10 pts</strong>.<br>Si cae al suelo, pierdes una vida.</li>
-                <li>🌿 <strong>Hoja</strong><br>¡Bonus! Vale <strong>50 pts</strong> y no penaliza si cae.</li>
-                <li>❤️ <strong>Vidas</strong><br>Empiezas con <strong>3 vidas</strong>. Cada chicle que se te escape te quita una.</li>
-                <li>⚡ <strong>Dificultad</strong><br>Cuantos más puntos, más rápido caen los objetos. ¡Sin límite!</li>
-            </ul>
-            <p id="controles">🖱️ <strong>PC:</strong> flechas ← →<br>📱 <strong>Móvil:</strong> desliza el dedo</p>
-        </aside>
     </div>
 
-    <!-- Overlay de Game Over / Leaderboard -->
+    <!-- ══════════════════════════════════════
+         OVERLAY GAME OVER / LEADERBOARD
+    ══════════════════════════════════════ -->
     <div id="overlay" class="oculto">
         <div id="panelGameOver">
             <h2>GAME OVER</h2>
             <p id="puntuacionFinal"></p>
             <div id="formNombre">
-                <input type="text" id="inputNombre" maxlength="3" placeholder="3 letras — estilo arcade" autocomplete="off" />
+                <input type="text" id="inputNombre" maxlength="3" placeholder="AAA" autocomplete="off" />
                 <button id="btnGuardar">💾 Guardar puntuación</button>
             </div>
             <div id="ranking" class="oculto">
@@ -44,10 +100,9 @@
         </div>
     </div>
 
-    <!-- Firebase SDK (v9 compat) -->
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyDWST4NKU_roqoGsMAAevs4zd-c4IqAOEU",
@@ -61,6 +116,22 @@
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
+    </script>
+
+    <script>
+        // Selector de personaje (manejado en HTML para que script.js lo lea)
+        let personajeSrc = 'assets/personaje.png';
+
+        function seleccionarPersonaje(card) {
+            document.querySelectorAll('.personaje-card').forEach(c => c.classList.remove('seleccionado'));
+            card.classList.add('seleccionado');
+            personajeSrc = card.dataset.src;
+        }
+
+        function arrancarJuego() {
+            document.getElementById('overlayInicio').classList.add('oculto');
+            iniciarJuego(personajeSrc);
+        }
     </script>
 
     <script src="script.js"></script>
