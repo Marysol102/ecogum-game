@@ -12,7 +12,20 @@
         <img src="assets/logo.png" alt="ECOGUM" id="logoImg" />
         <span id="theGame">The Game</span>
     </div>
-    <canvas id="juegoCanvas" width="400" height="500"></canvas>
+    <div id="juegoWrapper">
+        <canvas id="juegoCanvas" width="400" height="500"></canvas>
+
+        <aside id="instrucciones">
+            <h3>📋 Cómo jugar</h3>
+            <ul>
+                <li>🍬 <strong>Chicle</strong><br>Recógelo para ganar <strong>10 pts</strong>.<br>Si cae al suelo, pierdes una vida.</li>
+                <li>🌿 <strong>Hoja</strong><br>¡Bonus! Vale <strong>50 pts</strong> y no penaliza si cae.</li>
+                <li>❤️ <strong>Vidas</strong><br>Empiezas con <strong>3 vidas</strong>. Cada chicle que se te escape te quita una.</li>
+                <li>⚡ <strong>Dificultad</strong><br>Cuantos más puntos, más rápido caen los objetos. ¡Sin límite!</li>
+            </ul>
+            <p id="controles">🖱️ <strong>PC:</strong> flechas ← →<br>📱 <strong>Móvil:</strong> desliza el dedo</p>
+        </aside>
+    </div>
 
     <!-- Overlay de Game Over / Leaderboard -->
     <div id="overlay" class="oculto">
@@ -20,7 +33,7 @@
             <h2>GAME OVER</h2>
             <p id="puntuacionFinal"></p>
             <div id="formNombre">
-                <input type="text" id="inputNombre" maxlength="16" placeholder="Tu nombre (máx. 16 letras)" autocomplete="off" />
+                <input type="text" id="inputNombre" maxlength="3" placeholder="3 letras — estilo arcade" autocomplete="off" />
                 <button id="btnGuardar">💾 Guardar puntuación</button>
             </div>
             <div id="ranking" class="oculto">
