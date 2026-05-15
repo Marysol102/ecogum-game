@@ -16,6 +16,29 @@ h1 {
     text-shadow: 2px 2px 0px #ff5c8d;
 }
 
+#titulo {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 8px 0 4px;
+    line-height: 1;
+}
+
+#logoImg {
+    height: 52px;
+    width: auto;
+    display: block;
+}
+
+#theGame {
+    font-family: 'Fredoka One', cursive;
+    font-size: 30px;
+    color: #54b948;
+    text-shadow: 2px 2px 0px #ff5c8d;
+    /* Ajuste fino para alinear con la imagen */
+    padding-top: 4px;
+}
+
 canvas {
     background-color: #87CEEB;
     border: 4px solid #54b948;
