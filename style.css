@@ -21,5 +21,134 @@ canvas {
     border: 4px solid #54b948;
     max-width: 95%;
     max-height: 80vh;
-    image-rendering: pixelated; /* Mantiene tus dibujos pixel art nítidos */
+    image-rendering: pixelated;
+}
+
+/* --- OVERLAY GAME OVER / LEADERBOARD --- */
+#overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
+
+#overlay.oculto {
+    display: none;
+}
+
+#panelGameOver {
+    background: #1a1a2e;
+    border: 3px solid #54b948;
+    border-radius: 12px;
+    padding: 24px 28px;
+    text-align: center;
+    color: white;
+    font-family: 'Courier New', Courier, monospace;
+    max-width: 340px;
+    width: 90%;
+    max-height: 85vh;
+    overflow-y: auto;
+}
+
+#panelGameOver h2 {
+    color: #ff5c8d;
+    font-size: 28px;
+    margin: 0 0 8px;
+    text-shadow: 2px 2px 0 #000;
+}
+
+#puntuacionFinal {
+    font-size: 20px;
+    color: #ffd700;
+    margin-bottom: 16px;
+}
+
+#inputNombre {
+    width: 100%;
+    padding: 8px 10px;
+    font-size: 15px;
+    font-family: 'Courier New', Courier, monospace;
+    border: 2px solid #54b948;
+    border-radius: 6px;
+    background: #0f3460;
+    color: white;
+    box-sizing: border-box;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+#inputNombre::placeholder {
+    color: #aaa;
+    font-size: 13px;
+}
+
+#btnGuardar, #btnReiniciar {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 15px;
+    font-weight: bold;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: opacity 0.2s;
+}
+
+#btnGuardar {
+    background: #54b948;
+    color: white;
+}
+
+#btnGuardar:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+#btnReiniciar {
+    background: #ff5c8d;
+    color: white;
+}
+
+#btnGuardar:hover:not(:disabled),
+#btnReiniciar:hover {
+    opacity: 0.85;
+}
+
+/* Ranking */
+#ranking h3 {
+    color: #ffd700;
+    margin: 16px 0 8px;
+    font-size: 17px;
+}
+
+#listaRanking {
+    text-align: left;
+    padding-left: 20px;
+    margin: 0 0 12px;
+    color: #e0e0e0;
+    font-size: 14px;
+    line-height: 1.8;
+}
+
+#listaRanking li:first-child {
+    color: #ffd700;
+    font-weight: bold;
+}
+
+#listaRanking li:nth-child(2) {
+    color: #c0c0c0;
+}
+
+#listaRanking li:nth-child(3) {
+    color: #cd7f32;
+}
+
+#ranking.oculto,
+#formNombre.oculto {
+    display: none;
 }
